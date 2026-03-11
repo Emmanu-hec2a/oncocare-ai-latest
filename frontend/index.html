@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OncoCareAI - Cervical Cancer Detection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Cervical Cancer Awareness Colors */
+        :root {
+            --cervical-pink: #FF69B4;
+            --cervical-teal: #00CED1;
+            --cervical-dark-pink: #FF1493;
+            --cervical-light-pink: #FFB6C1;
+            --cervical-dark-teal: #008B8B;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        @keyframes slide-up {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes scale-in {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+        .animate-pulse-slow {
+            animation: pulse-slow 2s ease-in-out infinite;
+        }
+        .animate-slide-up {
+            animation: slide-up 0.5s ease-out;
+        }
+        .animate-scale-in {
+            animation: scale-in 0.3s ease-out;
+        }
+        .animate-fade-in {
+            animation: fade-in 0.3s ease-out;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #FFE4E1 0%, #FFFFFF 50%, #E0F7FA 100%);
+        }
+        
+        .cervical-gradient {
+            background: linear-gradient(135deg, var(--cervical-pink) 0%, var(--cervical-teal) 100%);
+        }
+        
+        .cervical-gradient-text {
+            background: linear-gradient(135deg, var(--cervical-pink) 0%, var(--cervical-teal) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--cervical-pink) 0%, var(--cervical-teal) 100%);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(255, 105, 180, 0.3);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--cervical-teal) 0%, var(--cervical-dark-teal) 100%);
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 206, 209, 0.3);
+        }
+        
+        .result-card {
+            transition: all 0.3s ease;
+        }
+        .result-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .progress-bar {
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .sidebar-item.active {
+            background: linear-gradient(135deg, var(--cervical-pink) 0%, var(--cervical-teal) 100%);
+            color: white;
+        }
+        
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
+        
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+        
+        .loading-spinner {
+            border: 4px solid rgba(255, 105, 180, 0.1);
+            border-top: 4px solid var(--cervical-pink);
+            border-radius: 50%;
+        }
+        
+        .ribbon-accent {
+            background: linear-gradient(90deg, var(--cervical-pink) 0%, var(--cervical-teal) 100%);
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <!-- Loading Modal -->
+    <div id="loadingModal" class="fixed inset-0 z-50 modal-overlay flex items-center justify-center hidden">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 animate-scale-in">
+            <div class="flex flex-col items-center">
+                <div class="loading-spinner w-16 h-16 animate-spin mb-4"></div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2" id="loadingTitle">Processing...</h3>
+                <p class="text-gray-600 text-center" id="loadingMessage">Please wait while we process your request</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Page -->
+    <div id="loginPage" class="min-h-screen flex items-center justify-center p-4">
+        <div class="glass-effect rounded-3xl shadow-2xl p-8 md:p-12 max-w-md w-full animate-slide-up">
+            <div class="text-center mb-8">
+                <div class="cervical-gradient w-20 h-20 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+                    <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h1 class="text-3xl font-bold cervical-gradient-text mb-2">OncoCareAI</h1>
+                <p class="text-gray-600">Cervical Cancer Detection System</p>
+            </div>
+
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                    <input type="text" id="loginUsername" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" id="loginPassword" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent">
+                </div>
+                <div id="mfaSection" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">MFA Code (Google Authenticator)</label>
+                    <input type="text" id="mfaCode" maxlength="6" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent" placeholder="000000">
+                    <p class="text-xs text-gray-500 mt-2">Enter the 6-digit code from your Google Authenticator app</p>
+                </div>
+                <button type="submit" class="w-full btn-primary text-white px-6 py-3 rounded-xl font-semibold shadow-lg">
+                    Login
+                </button>
+            </form>
+
+            <div id="loginError" class="hidden mt-4 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
+                <p id="loginErrorText" class="text-red-700 text-sm"></p>
+            </div>
+
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-600">Don't have an account? <a href="#" id="showRegister" class="text-pink-600 font-semibold hover:underline">Register</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="registerModal" class="fixed inset-0 z-50 modal-overlay flex items-center justify-center hidden">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 animate-scale-in max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Register</h2>
+                <button id="closeRegister" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <form id="registerForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                    <input type="text" id="regFullName" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                    <input type="text" id="regUsername" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" id="regEmail" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" id="regPassword" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                    <select id="regRole" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500">
+                        <option value="pathologist">Pathologist</option>
+                        <option value="oncologist">Oncologist</option>
+                        <option value="nurse">Nurse</option>
+                        <option value="admin">Administrator</option>
+                    </select>
+                </div>
+                <button type="submit" class="w-full btn-primary text-white px-6 py-3 rounded-xl font-semibold">
+                    Register
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Application (Hidden until login) -->
+    <div id="mainApp" class="hidden flex">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white shadow-xl min-h-screen fixed left-0 top-0 z-40">
+            <div class="p-6 border-b border-gray-200">
+                <h1 class="text-2xl font-bold cervical-gradient-text">OncoCareAI</h1>
+                <p class="text-sm text-gray-600 mt-1">Cervical Cancer Detection</p>
+            </div>
+            <nav class="p-4 space-y-2">
+                <a href="#" data-page="dashboard" class="sidebar-item flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 transition-all cursor-pointer">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                    </svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" data-page="patients" class="sidebar-item flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 transition-all cursor-pointer">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    <span>Patient Records</span>
+                </a>
+                <a href="#" data-page="analyses" class="sidebar-item flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 transition-all cursor-pointer">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    <span>Analysis Results</span>
+                </a>
+                <a href="#" data-page="ehr" class="sidebar-item flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 transition-all cursor-pointer">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <span>EHR Integration</span>
+                </a>
+                <a href="#" data-page="admin" id="adminNav" class="sidebar-item flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 transition-all cursor-pointer hidden">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    <span>Admin Panel</span>
+                </a>
+            </nav>
+            <div class="absolute bottom-4 left-4 right-4">
+                <div class="flex items-center gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
+                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse-slow"></div>
+                    <span class="text-sm text-gray-700">System Ready</span>
+                </div>
+                <button id="logoutBtn" class="w-full mt-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all text-sm font-semibold">
+                    Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 ml-64">
+            <header class="glass-effect shadow-lg border-b border-gray-200 sticky top-0 z-30">
+                <div class="max-w-7xl mx-auto px-6 py-4">
+                    <div class="flex items-center justify-between">
+                        <h2 id="pageTitle" class="text-2xl font-bold text-gray-800">Dashboard</h2>
+                        <div class="flex items-center gap-4">
+                            <div class="text-right">
+                                <p class="text-sm text-gray-500">Logged in as</p>
+                                <p class="text-sm font-medium text-gray-700" id="userDisplayName">User</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="max-w-7xl mx-auto px-6 py-8">
+                <!-- Dashboard Page -->
+                <div id="dashboard" class="page active">
+                    <!-- Content from previous implementation -->
+                    <div class="mb-8">
+                        <div class="flex items-center justify-center gap-4">
+                            <div id="step1" class="flex items-center gap-2">
+                                <div class="w-10 h-10 rounded-full bg-pink-500 text-white flex items-center justify-center font-semibold shadow-lg transition-all duration-300">1</div>
+                                <span class="text-sm font-medium text-gray-700 hidden sm:inline">Upload</span>
+                            </div>
+                            <div class="w-16 h-1 bg-gray-300 rounded transition-all duration-300" id="progress1"></div>
+                            <div id="step2" class="flex items-center gap-2">
+                                <div class="w-10 h-10 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center font-semibold transition-all duration-300">2</div>
+                                <span class="text-sm font-medium text-gray-500 hidden sm:inline">Analyze</span>
+                            </div>
+                            <div class="w-16 h-1 bg-gray-300 rounded transition-all duration-300" id="progress2"></div>
+                            <div id="step3" class="flex items-center gap-2">
+                                <div class="w-10 h-10 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center font-semibold transition-all duration-300">3</div>
+                                <span class="text-sm font-medium text-gray-500 hidden sm:inline">Results</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid lg:grid-cols-2 gap-6">
+                        <!-- Upload Section -->
+                        <div class="glass-effect rounded-3xl shadow-xl p-6 md:p-8">
+                            <div class="flex items-center gap-3 mb-6">
+                                <div class="w-10 h-10 rounded-xl cervical-gradient flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                </div>
+                                <h2 class="text-2xl font-bold text-gray-800">Upload Colposcopy Image</h2>
+                            </div>
+
+                            <div id="uploadArea" class="border-4 border-dashed border-gray-300 rounded-2xl p-8 md:p-12 text-center cursor-pointer hover:border-pink-500 hover:bg-pink-50 transition-all">
+                                <input type="file" id="fileInput" accept="image/*" class="hidden">
+                                <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                </svg>
+                                <p class="text-lg text-gray-700 mb-2 font-medium">Drag and drop your image here</p>
+                                <p class="text-sm text-gray-500 mb-4">Supports: JPG, PNG, JPEG (Max 10MB)</p>
+                                <label for="fileInput" class="inline-block btn-primary text-white px-8 py-3 rounded-xl font-semibold cursor-pointer shadow-lg">
+                                    Browse Files
+                                </label>
+                            </div>
+
+                            <div id="previewArea" class="hidden mt-6">
+                                <div class="relative rounded-2xl overflow-hidden border-2 border-gray-200 mb-6">
+                                    <img id="previewImage" class="w-full h-80 object-cover" alt="Preview">
+                                </div>
+                                <div class="flex gap-4">
+                                    <button id="analyzeBtn" class="flex-1 btn-primary text-white px-6 py-4 rounded-xl font-semibold shadow-lg">
+                                        Analyze Image
+                                    </button>
+                                    <button id="clearBtn" class="px-6 py-4 border-2 border-gray-300 rounded-xl hover:bg-gray-50">
+                                        Clear
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="errorMessage" class="hidden mt-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
+                                <p id="errorMessageText" class="text-red-700 text-sm"></p>
+                            </div>
+                        </div>
+
+                        <!-- Results Section -->
+                        <div class="glass-effect rounded-3xl shadow-xl p-6 md:p-8">
+                            <div class="flex items-center gap-3 mb-6">
+                                <div class="w-10 h-10 rounded-xl cervical-gradient flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                    </svg>
+                                </div>
+                                <h2 class="text-2xl font-bold text-gray-800">Analysis Results</h2>
+                            </div>
+
+                            <div id="initialState" class="flex flex-col items-center justify-center h-96 text-center">
+                                <div class="w-32 h-32 bg-gradient-to-br from-pink-100 to-teal-100 rounded-3xl flex items-center justify-center mb-6">
+                                    <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                </div>
+                                <p class="text-gray-600 text-lg font-medium mb-2">No Analysis Yet</p>
+                                <p class="text-gray-500 text-sm">Upload an image to see the results</p>
+                            </div>
+
+                            <div id="loadingState" class="hidden flex flex-col items-center justify-center h-96">
+                                <div class="relative mb-8">
+                                    <div class="animate-spin rounded-full h-20 w-20 border-4 border-gray-200"></div>
+                                    <div class="loading-spinner w-20 h-20 absolute top-0 left-0"></div>
+                                </div>
+                                <p class="text-gray-700 text-lg font-semibold mb-2">Analyzing image...</p>
+                                <p class="text-gray-500 text-sm">Differentiating infections from cancer cells</p>
+                            </div>
+
+                            <div id="resultsState" class="hidden space-y-6">
+                                <!-- Results content will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Other pages (Patients, Analyses, EHR, Admin) -->
+                <div id="patients" class="page">
+                    <div class="mb-6 flex justify-between items-center">
+                        <h2 class="text-2xl font-bold text-gray-800">Patient Records</h2>
+                        <button id="addPatientBtn" class="btn-primary text-white px-6 py-2 rounded-lg font-semibold">
+                            + Add Patient
+                        </button>
+                    </div>
+                    <div id="patientsList" class="space-y-4"></div>
+                </div>
+
+                <div id="analyses" class="page">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Analysis Results & Reviews</h2>
+                        <p class="text-gray-600 mt-2">Review and approve analysis results before EHR sync</p>
+                    </div>
+                    <div id="analysesList" class="space-y-4"></div>
+                </div>
+
+                <div id="ehr" class="page">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">EHR Integration</h2>
+                        <p class="text-gray-600 mt-2">Sync reviewed analysis results to Electronic Health Records</p>
+                    </div>
+                    <div id="ehrSyncList" class="space-y-4"></div>
+                </div>
+
+                <!-- Admin Panel -->
+                <div id="admin" class="page">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Admin Panel</h2>
+                        <p class="text-gray-600 mt-2">System management and monitoring</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="glass-effect rounded-xl shadow-lg p-6 border-l-4 border-pink-500">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">Pending Verifications</h3>
+                            <p class="text-3xl font-bold text-pink-600" id="pendingVerifications">0</p>
+                        </div>
+                        <div class="glass-effect rounded-xl shadow-lg p-6 border-l-4 border-teal-500">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">Total Users</h3>
+                            <p class="text-3xl font-bold text-teal-600" id="totalUsers">0</p>
+                        </div>
+                        <div class="glass-effect rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">Blockchain Blocks</h3>
+                            <p class="text-3xl font-bold text-purple-600" id="blockchainBlocks">0</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- User Verification -->
+                        <div class="glass-effect rounded-xl shadow-lg p-6">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">User Verification</h3>
+                            <div id="userVerificationList" class="space-y-3"></div>
+                        </div>
+
+                        <!-- Audit Logs -->
+                        <div class="glass-effect rounded-xl shadow-lg p-6">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">Recent Audit Logs</h3>
+                            <div id="auditLogsList" class="space-y-3 max-h-96 overflow-y-auto"></div>
+                        </div>
+
+                        <!-- Blockchain Access -->
+                        <div class="glass-effect rounded-xl shadow-lg p-6 lg:col-span-2">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">Blockchain Access Tracking</h3>
+                            <div id="blockchainList" class="space-y-2 max-h-96 overflow-y-auto"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:8001';
+        let authToken = null;
+        let currentUser = null;
+        let currentPage = 'dashboard';
+
+        // Utility Functions
+        function showLoading(title = 'Processing...', message = 'Please wait while we process your request') {
+            document.getElementById('loadingTitle').textContent = title;
+            document.getElementById('loadingMessage').textContent = message;
+            document.getElementById('loadingModal').classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingModal').classList.add('hidden');
+        }
+
+        function showError(elementId, message) {
+            const element = document.getElementById(elementId);
+            element.classList.remove('hidden');
+            document.getElementById(elementId + 'Text').textContent = message;
+        }
+
+        function hideError(elementId) {
+            document.getElementById(elementId).classList.add('hidden');
+        }
+
+        async function apiCall(url, options = {}) {
+            const headers = {
+                ...options.headers
+            };
+            
+            if (authToken) {
+                headers['Authorization'] = authToken;
+            }
+
+            const response = await fetch(`${API_URL}${url}`, {
+                ...options,
+                headers
+            });
+
+            if (response.status === 401) {
+                // Token expired, logout
+                logout();
+                return null;
+            }
+
+            return response;
+        }
+
+        // Authentication
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            showLoading('Logging in...', 'Authenticating your credentials');
+            
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            const mfaCode = document.getElementById('mfaCode').value;
+
+            try {
+                const response = await fetch(`${API_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username,
+                        password,
+                        mfa_code: mfaCode || null
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    if (data.detail && data.detail.includes('MFA code required')) {
+                        document.getElementById('mfaSection').classList.remove('hidden');
+                        hideLoading();
+                        return;
+                    }
+                    throw new Error(data.detail || 'Login failed');
+                }
+
+                authToken = data.token;
+                currentUser = data.user;
+                localStorage.setItem('authToken', authToken);
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+                hideLoading();
+                document.getElementById('loginPage').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                
+                // Show admin nav if admin
+                if (currentUser.role === 'admin') {
+                    document.getElementById('adminNav').classList.remove('hidden');
+                }
+                
+                document.getElementById('userDisplayName').textContent = currentUser.full_name;
+                navigateToPage('dashboard');
+            } catch (error) {
+                hideLoading();
+                showError('loginError', error.message);
+            }
+        });
+
+        // Register
+        document.getElementById('showRegister').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('registerModal').classList.remove('hidden');
+        });
+
+        document.getElementById('closeRegister').addEventListener('click', () => {
+            document.getElementById('registerModal').classList.add('hidden');
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            showLoading('Registering...', 'Creating your account');
+
+            try {
+                const response = await fetch(`${API_URL}/api/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: document.getElementById('regUsername').value,
+                        email: document.getElementById('regEmail').value,
+                        password: document.getElementById('regPassword').value,
+                        role: document.getElementById('regRole').value,
+                        full_name: document.getElementById('regFullName').value
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.detail || 'Registration failed');
+
+                hideLoading();
+                alert('Registration successful! Please wait for admin verification.');
+                document.getElementById('registerModal').classList.add('hidden');
+                document.getElementById('registerForm').reset();
+            } catch (error) {
+                hideLoading();
+                alert(`Registration failed: ${error.message}`);
+            }
+        });
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+
+        function logout() {
+            if (authToken) {
+                fetch(`${API_URL}/api/auth/logout`, {
+                    method: 'POST',
+                    headers: { 'Authorization': authToken }
+                });
+            }
+            authToken = null;
+            currentUser = null;
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('currentUser');
+            document.getElementById('loginPage').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+        }
+
+        // Check if already logged in
+        const savedToken = localStorage.getItem('authToken');
+        const savedUser = localStorage.getItem('currentUser');
+        if (savedToken && savedUser) {
+            authToken = savedToken;
+            currentUser = JSON.parse(savedUser);
+            document.getElementById('loginPage').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            if (currentUser.role === 'admin') {
+                document.getElementById('adminNav').classList.remove('hidden');
+            }
+            document.getElementById('userDisplayName').textContent = currentUser.full_name;
+        }
+
+        // Navigation
+        document.querySelectorAll('.sidebar-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const page = item.getAttribute('data-page');
+                navigateToPage(page);
+            });
+        });
+
+        function navigateToPage(page) {
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`[data-page="${page}"]`).classList.add('active');
+
+            document.querySelectorAll('.page').forEach(p => {
+                p.classList.remove('active');
+            });
+            document.getElementById(page).classList.add('active');
+
+            const titles = {
+                dashboard: 'Dashboard',
+                patients: 'Patient Records',
+                analyses: 'Analysis Results',
+                ehr: 'EHR Integration',
+                admin: 'Admin Panel'
+            };
+            document.getElementById('pageTitle').textContent = titles[page];
+            currentPage = page;
+
+            if (page === 'patients') loadPatients();
+            if (page === 'analyses') loadAnalyses();
+            if (page === 'ehr') loadEHRSyncs();
+            if (page === 'admin') loadAdminPanel();
+        }
+
+        // Dashboard functionality (similar to before but with loading modals)
+        const fileInput = document.getElementById('fileInput');
+        const uploadArea = document.getElementById('uploadArea');
+        const previewArea = document.getElementById('previewArea');
+        const previewImage = document.getElementById('previewImage');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        let selectedFile = null;
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) handleFileSelect(file);
+        });
+
+        function handleFileSelect(file) {
+            if (file.size > 10 * 1024 * 1024) {
+                showError('errorMessage', 'File size too large. Please select an image under 10MB.');
+                return;
+            }
+            selectedFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                uploadArea.classList.add('hidden');
+                previewArea.classList.remove('hidden');
+                hideError('errorMessage');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        clearBtn.addEventListener('click', () => {
+            selectedFile = null;
+            fileInput.value = '';
+            previewArea.classList.add('hidden');
+            uploadArea.classList.remove('hidden');
+        });
+
+        analyzeBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+            showLoading('Analyzing Image...', 'Differentiating infections from cancer cells');
+            
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            
+            try {
+                const response = await apiCall('/predict', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Authorization': authToken
+                    }
+                });
+
+                if (!response || !response.ok) {
+                    throw new Error('Analysis failed');
+                }
+
+                const result = await response.json();
+                window.lastAnalysisResult = result;
+                
+                displayResults(result);
+                hideLoading();
+            } catch (error) {
+                hideLoading();
+                showError('errorMessage', `Analysis failed: ${error.message}`);
+            }
+        });
+
+        function displayResults(result) {
+            document.getElementById('initialState').classList.add('hidden');
+            document.getElementById('loadingState').classList.add('hidden');
+            const resultsState = document.getElementById('resultsState');
+            resultsState.classList.remove('hidden');
+            
+            // Populate results (similar to before)
+            resultsState.innerHTML = `
+                <div class="p-6 rounded-2xl border-2 result-card bg-gradient-to-br from-pink-50 to-teal-50">
+                    <h3 class="text-2xl font-bold mb-2">${result.diagnosis}</h3>
+                    <p class="text-sm font-semibold mb-4">${result.risk_level}</p>
+                    <p class="text-lg font-bold">Confidence: ${result.confidence}%</p>
+                </div>
+                <div class="p-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl">
+                    <h4 class="font-bold mb-3">Recommendations</h4>
+                    <ul class="space-y-2">
+                        ${result.recommendations.map(r => `<li>• ${r}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="p-6 bg-gray-50 rounded-2xl">
+                    <input type="text" id="patientId" placeholder="Patient ID" class="w-full px-4 py-2 border rounded-lg mb-2">
+                    <input type="text" id="patientName" placeholder="Patient Name" class="w-full px-4 py-2 border rounded-lg mb-4">
+                    <button onclick="saveAnalysis()" class="w-full btn-primary text-white px-6 py-3 rounded-xl font-semibold">
+                        Save Analysis Result
+                    </button>
+                </div>
+            `;
+        }
+
+        window.saveAnalysis = async function() {
+            const patientId = document.getElementById('patientId').value;
+            const patientName = document.getElementById('patientName').value;
+
+            if (!patientId) {
+                alert('Please enter Patient ID');
+                return;
+            }
+
+            showLoading('Saving Analysis...', 'Storing analysis result');
+
+            try {
+                const payload = {
+                    patient_id: patientId,
+                    patient_name: patientName,
+                    ...lastAnalysisResult   // spread the analysis fields at top level
+                };
+
+                const response = await apiCall('/api/analysis/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response || !response.ok) {
+                    throw new Error('Save failed');
+                }
+
+                const result = await response.json();
+                console.log('Saved successfully:', result);
+                hideLoading();
+                alert('Analysis saved!');
+            } catch (error) {
+                hideLoading();
+                showError('errorMessage', `Save failed: ${error.message}`);
+            }
+        };
+
+
+        // Admin Panel Functions
+        async function loadAdminPanel() {
+            if (currentUser.role !== 'admin') return;
+            
+            showLoading('Loading Admin Panel...', 'Fetching system data');
+            
+            try {
+                const [usersRes, auditRes, blockchainRes, notificationsRes] = await Promise.all([
+                    apiCall('/api/admin/users'),
+                    apiCall('/api/admin/audit-logs'),
+                    apiCall('/api/admin/blockchain-access'),
+                    apiCall('/api/admin/notifications')
+                ]);
+
+                const users = await usersRes.json();
+                const audit = await auditRes.json();
+                const blockchain = await blockchainRes.json();
+                const notifications = await notificationsRes.json();
+
+                // Update stats
+                document.getElementById('pendingVerifications').textContent = 
+                    notifications.notifications.filter(n => n.type === 'user_verification').length;
+                document.getElementById('totalUsers').textContent = users.users.length;
+                document.getElementById('blockchainBlocks').textContent = blockchain.blockchain.length;
+
+                // User verification list
+                const verificationList = document.getElementById('userVerificationList');
+                verificationList.innerHTML = '';
+                users.users.filter(u => !u.verified).forEach(user => {
+                    const div = document.createElement('div');
+                    div.className = 'p-4 bg-yellow-50 rounded-lg border border-yellow-200';
+                    div.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="font-semibold">${user.full_name}</p>
+                                <p class="text-sm text-gray-600">${user.role} • ${user.email}</p>
+                            </div>
+                            <button onclick="verifyUser('${user.username}')" class="btn-primary text-white px-4 py-2 rounded-lg text-sm">
+                                Verify
+                            </button>
+                        </div>
+                    `;
+                    verificationList.appendChild(div);
+                });
+
+                // Audit logs
+                const auditList = document.getElementById('auditLogsList');
+                auditList.innerHTML = '';
+                audit.logs.slice(-10).reverse().forEach(log => {
+                    const div = document.createElement('div');
+                    div.className = 'p-3 bg-gray-50 rounded-lg border border-gray-200';
+                    div.innerHTML = `
+                        <p class="font-semibold text-sm">${log.action}</p>
+                        <p class="text-xs text-gray-600">${log.user} • ${new Date(log.timestamp).toLocaleString()}</p>
+                    `;
+                    auditList.appendChild(div);
+                });
+
+                // Blockchain
+                const blockchainList = document.getElementById('blockchainList');
+                blockchainList.innerHTML = '';
+                blockchain.blockchain.slice(-20).reverse().forEach(block => {
+                    const div = document.createElement('div');
+                    div.className = 'p-3 bg-gray-50 rounded-lg border border-gray-200 font-mono text-xs';
+                    div.innerHTML = `
+                        <p><strong>User:</strong> ${block.user} | <strong>Patient:</strong> ${block.patient_id} | <strong>Action:</strong> ${block.action}</p>
+                        <p class="text-gray-500">${new Date(block.timestamp).toLocaleString()} | Hash: ${block.hash.substring(0, 16)}...</p>
+                    `;
+                    blockchainList.appendChild(div);
+                });
+
+                hideLoading();
+            } catch (error) {
+                hideLoading();
+                console.error('Error loading admin panel:', error);
+            }
+        }
+
+        window.verifyUser = async function(username) {
+            showLoading('Verifying User...', 'Processing verification');
+            try {
+                const response = await apiCall(`/api/admin/users/${username}/verify`, {
+                    method: 'POST'
+                });
+                if (response && response.ok) {
+                    hideLoading();
+                    alert('User verified successfully!');
+                    loadAdminPanel();
+                }
+            } catch (error) {
+                hideLoading();
+                alert(`Error: ${error.message}`);
+            }
+        };
+
+        // Other page loaders (similar structure)
+        async function loadPatients() {
+            showLoading('Loading Patients...', 'Fetching patient records');
+            // Implementation
+            hideLoading();
+        }
+
+        async function loadAnalyses() {
+            showLoading('Loading Analyses...', 'Fetching analysis results');
+            // Implementation
+            hideLoading();
+        }
+
+        async function loadEHRSyncs() {
+            showLoading('Loading EHR Syncs...', 'Fetching EHR integration data');
+            // Implementation
+            hideLoading();
+        }
+
+        // Initialize
+        if (currentUser) {
+            navigateToPage('dashboard');
+        }
+    </script>
+</body>
+</html>

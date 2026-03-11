@@ -1,0 +1,46 @@
+{
+  "patients": {
+    "12345678": {
+      "patient_id": "12345678",
+      "patient_name": "Patient1",
+      "age": 0,
+      "gender": "Unknown",
+      "date_of_birth": null,
+      "contact_info": null,
+      "created_at": "2026-01-05T21:12:59.002104",
+      "updated_at": "2026-01-05T21:12:59.002133"
+    }
+  },
+  "analyses": {
+    "ANALYSIS_20260105211259_25d55ad2": {
+      "patient_id": "12345678",
+      "analysis_id": "ANALYSIS_20260105211259_25d55ad2",
+      "image_filename": "cervix.jpg",
+      "diagnosis": "LSIL (Low-grade Squamous Intraepithelial Lesion)",
+      "confidence": 35.2,
+      "risk_level": "Medium Risk",
+      "class_probabilities": {
+        "Normal": 1.01,
+        "Infectious": 7.02,
+        "ASCUS (Atypical Squamous Cells of Undetermined Significance)": 30.66,
+        "LSIL (Low-grade Squamous Intraepithelial Lesion)": 38.29,
+        "HSIL (High-grade Squamous Intraepithelial Lesion)": 21.01,
+        "NILM (Negative for Intraepithelial Lesion or Malignancy)": 1.01,
+        "SCC (Squamous Cell Carcinoma)": 1.01
+      },
+      "recommendations": [
+        "Schedule follow-up appointment within 3-6 months",
+        "Repeat Pap test in 6-12 months as recommended",
+        "Discuss HPV testing with healthcare provider",
+        "Monitor for any changes in symptoms"
+      ],
+      "reviewed_by": "Doctor",
+      "review_status": "approved",
+      "review_notes": "Accurate",
+      "ehr_synced": false,
+      "created_at": "2026-01-05T21:12:59.027479",
+      "updated_at": "2026-01-05T21:14:00.782141",
+      "reviewed_at": "2026-01-05T21:14:00.782120"
+    }
+  }
+}
